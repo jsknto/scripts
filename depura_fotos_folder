@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# Enlaces y Comunicaciones del Sureste, S.A. de C.V.
+# Derechos Reservados 2002-2009
+#
+# Descripcion: Depura la carpeta /var/www/html/v7/fotos
+# Version: 1.0
+# Actualizacion: 01 de Diciembre de 2010
+#
+
+LOG=/var/log/depura_fotos_folder.log
+DIRS=/usr/local/bin/depura_fotos_folder_dirs
+FOTOS_DIR=/var/www/html/v7/fotos
+OLDER_THAN=15
+TODAY=`date "+%Y%m%d"`
+DATE_TO_DELETE=`date -d '-30 days' "+%Y%m%d"`
+
+for i in `cat $DIRS`
+  do
+        echo "`date` - Depurando $i" >> $LOG
+	
+	echo `date` >> $LOG
+	#find $i -mtime +$OLDER_THAN -exec ls {} \; >> $LOG
+	find $i -mtime +$OLDER_THAN -exec rm -fr {} \; >> $LOG
+	#echo $DATE_TO_DELETE"*"
+	#rm -fr $DATE_TO_DELETE"*" >> $LOG
+        
+	echo "`date` - Depuracion de $i Finalizada" >> $LOG
+  done

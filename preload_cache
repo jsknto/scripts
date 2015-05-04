@@ -1,0 +1,77 @@
+#!/bin/sh
+#
+# Version 4.0
+# By alan@megamedia.com.mx
+# Update: 1 Oct 2014
+#
+
+PRELOAD_CMD=/usr/local/bin/ocp
+PORTADAS_DIR=/etc/nginx/portadas
+SITEMAP_NEWS=sitemap-news.xml
+PGCACHE_ROOT=/var/www/yucatan.com.mx/wp-content/w3tc
+INDEX_FILE="_index.html"
+WEBSITES="yucatan.com.mx sociales.yucatan.com.mx"
+PROCESO=`basename $0`
+MAX=50
+LOG=/var/log/preload_cache.log
+MAXLOAD=10
+
+# Verifica si se esta ejecutando
+if [ ! -z "$1" ] ; then
+        PROCESO="$PROCESO $1"
+fi
+
+ps -ef | grep "$PROCESO" | grep -v $$ > /dev/null
+if [ $? -eq 0 ] ; then
+        echo "`date "+%F %X"` - Error: El proceso esta activo para $1" >> $LOG
+        exit
+fi
+
+# Verifica carga del servidor
+LOAD=`uptime | awk 'BEGIN {FS="average:"} {print $2}' | awk 'BEGIN {FS=","} {print $2}' | awk 'BEGIN {FS="."} {print $1}'`
+
+if [ "$LOAD" -gt "$MAXLOAD" ] ; then
+        echo "`date "+%F %X"` - Error: La carga del servidor es muy alta -> $LOAD" >> $LOG
+	exit
+fi
+
+for site in $WEBSITES
+do
+	PGCACHE_DIR="$PGCACHE_ROOT-$site/pgcache"
+
+	if [ "$1" == "portadas" ] ; then
+		SITEMAP=$PORTADAS_DIR/$site.xml
+	else
+		# Refresca Sitemap de notas
+		if [ -f $PGCACHE_DIR/$SITEMAP_NEWS/_index.xml ] ; then
+			rm -f $PGCACHE_DIR/$SITEMAP_NEWS/*
+		fi
+
+		# Sitemap (ultimas 48 hrs)
+		SITEMAP="http://$site/$SITEMAP_NEWS"
+	fi
+
+	# Elimina las paginas del W3 Total Cache
+	for page in `$PRELOAD_CMD --print $SITEMAP | head -n $MAX`
+    	do
+        	# Parsea el URL
+        	proto="$(echo $page | grep :// | sed -e's,^\(.*://\).*,\1,g')"
+        	url="$(echo ${page/$proto/})"
+        	host="$(echo $url | cut -d/ -f1)"
+        	path="$(echo $url | grep / | cut -d/ -f2-)"
+
+        	if [ -z "$path" ] ; then
+               		PGCACHE_FILE=$PGCACHE_ROOT-$host/pgcache/$INDEX_FILE
+        	else
+               		PGCACHE_FILE=$PGCACHE_ROOT-$host/pgcache/$path/$INDEX_FILE
+        	fi
+
+        	# Limpia cache W3TC
+        	rm -f $PGCACHE_FILE
+        	rm -f ${PGCACHE_FILE}_gzip
+    	done
+
+	# Genera el cache
+	$PRELOAD_CMD -v -c 5 -max=$MAX -l $PGCACHE_DIR -ls $INDEX_FILE $SITEMAP >> $LOG 2>&1
+
+done

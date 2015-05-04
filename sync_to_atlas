@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+#  Sync XML files to Atlas server (for iPad App)
+#  By alan@megamedia.com.mx
+#  Updated: 3 May 2013
+#
+
+SOURCE_DIR=/var/www/html/v8/Respaldo_xml/IPAD
+DEST_DIR="/mnt/atlasnt/XML"
+LOG=/var/log/sync_to_atlas.log
+
+rsync -au $SOURCE_DIR/* $DEST_DIR >> $LOG 2>&1

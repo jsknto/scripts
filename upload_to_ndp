@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+#  Upload PDFs to NDPublishingIT
+#  By alan@megamedia.com.mx
+#  Updated: 8 Abr 2015
+#
+
+FTP_SERVER="ftp.newspaperdirect.com"
+FTP_USER="CompaniaTipogrYuca"
+FTP_PASS="BH6afa*B23"
+PDF_DIR=/mnt/atlasnt/PDFS
+LOG=/var/log/upload_to_ndp.log
+
+PUB_DATE=`date "+%d%m%Y"`
+#PUB_DATE=05012015
+
+ncftpput -r 10 -V -m -d $LOG -t 600 -u $FTP_USER -p $FTP_PASS $FTP_SERVER $PUB_DATE $PDF_DIR/$PUB_DATE/*

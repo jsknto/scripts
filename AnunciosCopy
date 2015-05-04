@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+# All Rights Reserved 2008 -- Red y Comunicacion, Grupo Megamedia
+#
+# Desc: Sincroniza desde vancouver los directorios especificados en el
+#       archivo /usr/local/bin/sync_from_illinois_dirs
+# Date: Agosto 06, 2010
+#
+
+LOG=/var/log/AnuncionCopy.log
+DIRS=/usr/local/bin/AnunciosCopy_dirs
+LOCK=/var/run/sync.Anuncios.lock
+TODAY=`date "+%Y%m%d"`
+
+if [ -f "$LOCK" ] ; then
+
+echo "`date` - La Sincronizacion anterior no ha finalizado" >> $LOG
+exit
+
+else
+
+`touch $LOCK`
+date >> $LOCK
+
+echo ">>>> `date` - Inicia proceso de sincronizacion $TODAY <<<<" >> $LOG
+
+for i in `cat $DIRS`
+  do
+
+        echo "Content-type: text/html"
+        echo ""
+        echo "<html><head><title>Sincroniza la carpeta $i</title></head><body>"
+
+        echo "`date` - Realizando Sincronizacion de $TODAY" >> $LOG
+
+        # La sincronizacion se realiza con RSYNC
+	#rsync -vauz --remove-source-files --log-file=$LOG /var/www/html/v7/$i/ /var/www/html/v7/fotos/xml/
+       rsync -vauz  --remove-source-files --log-file=$LOG /var/www/html/v7/anuncios/procesadas/$TODAY illinois:/var/www/html/edicion/images/anunciosimpresos/
+
+        echo "`date` - Sincronizacion de $TODAY Finalizada" >> $LOG
+  done
+
+echo "---- `date` - Proceso de sincronizacion finalizado ----" >> $LOG
+
+`rm -f $LOCK`
+
+fi
+
+exit

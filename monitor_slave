@@ -1,0 +1,9 @@
+#! /usr/bin/env ruby
+require 'mysql'
+conn=Mysql.new('127.0.0.1','root','tocoxid1')
+h=conn.query("show slave status").fetch_hash
+unless h.nil?
+  if h["Slave_IO_Running"] == "Yes" and h["Slave_SQL_Running"] == "Yes"
+    system("touch /var/run/monit/watchdog")
+  end
+end

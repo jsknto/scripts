@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+# Borra de cache remoto
+# By alan@megamedia.com.mx
+# 10 Nov 2012
+
+LOG=/var/log/rmcache-cgi.log
+REMOTE_CACHES="162.243.39.5 108.163.241.227 192.237.201.220"
+SQUID_CLI=/usr/sbin/squidclient
+
+
+if [ ! -z "$1" ] ; then
+	for cache in $REMOTE_CACHES
+	do
+		echo "Depurando cache $cache"
+		$SQUID_CLI -h $cache -p 80 -m PURGE $1
+	done
+else
+	echo "ERROR: No especifico URL"
+fi

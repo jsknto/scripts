@@ -1,0 +1,48 @@
+#!/bin/sh
+#
+# Version 4.0
+# By alan@megamedia.com.mx
+# Update: 11 Jun 2014
+#
+
+URL_LIST=/etc/nginx/portadas
+LOG=/var/log/rmcache.log
+ROOT_DOMAIN=yucatan.com.mx
+PRELOAD_CMD=/usr/local/bin/ocp
+PGCACHE_DIR=/var/www/yucatan.com.mx/wp-content/w3tc-
+INDEX_FILE="_index.html"
+WEBSITES="yucatan.com.mx sociales.yucatan.com.mx brasil2014.yucatan.com.mx"
+MAXLOAD=10
+ERR=-1
+
+for site in $WEBSITES
+do
+  if [ "$1" == "portadas" ] ; then
+  # Elimina las portadas de todos los sitios
+    for page in `$PRELOAD_CMD --print $URL_LIST/$site.xml`
+    do	
+	# Parsea el URL
+	proto="$(echo $page | grep :// | sed -e's,^\(.*://\).*,\1,g')"
+	url="$(echo ${page/$proto/})"
+	host="$(echo $url | cut -d/ -f1)"
+	path="$(echo $url | grep / | cut -d/ -f2-)"
+
+	# Limpia y regenera W3TC
+	if [ -z "$path" ] ; then
+		PGCACHE_FILE=$PGCACHE_DIR$host/pgcache/$INDEX_FILE
+	else
+		PGCACHE_FILE=$PGCACHE_DIR$host/pgcache/$path/$INDEX_FILE
+	fi
+
+	if [ -f "$PGCACHE_FILE" ] ; then
+ 		rm -f $PGCACHE_FILE*
+	fi
+
+	echo "`date` - Pagina depurada: $page" >> $LOG
+    done
+
+  else
+	# Elimina paginas antiguas de W3TC
+	find $PGCACHE_DIR$site/pgcache/ -type f -mmin +30 -exec rm -fv {} \; >> $LOG 2>&1
+  fi
+done

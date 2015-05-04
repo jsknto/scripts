@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+#  By dcanto@megamedia.com.mx
+#  Updated: 9 Mar 2015
+#  Vers: 3.0
+#
+LOCK=/var/lock/copiaxmlgn4.lock
+
+#mount -t cifs //192.168.7.71/wppublish /mnt/gn4 -o username=gn4wp,password=W0rdPr3ss
+
+# Verifica que no este corriendo el proceso
+if [ -f $LOCK ] ; then
+        echo "`date "+%F %X"` - El proceso ya esta activo"
+        exit
+else
+        touch $LOCK
+fi
+
+# Sincroniza desde GN4 hasta Banyan
+rsync -avz /mnt/gn4/ banyan:/var/www/html/gn4/xml/
+
+rm $LOCK

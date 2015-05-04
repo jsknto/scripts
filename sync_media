@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+#  Sync EE files to replica Servers
+#  By alan@megamedia.com.mx
+#  Updated: 13 Sep 2014
+#
+
+REMOTE_SERVER="$1"
+WEBSITE_DIR=/var/www/yucatan.com.mx/wp-content/uploads
+DEST_DIR=/var/www/yucatan.com.mx/wp-content
+LOG=/var/log/sync_media.log
+LOCK=/var/lock/sync_media-$1.lock
+RSYNC_EXCLUDES=/etc/rsync/rsync-exclusions.conf 
+
+if [ -f $LOCK ] ; then
+	echo "`date "+%F %X"` - El proceso de replica ya esta activo para $1" >> $LOG
+	exit
+else
+	touch $LOCK
+fi
+
+for server in $REMOTE_SERVER
+do
+	echo "`date "+%F %X"` - Actualizando $server" >> $LOG
+	/usr/bin/rsync -vauzL --exclude-from=$RSYNC_EXCLUDES $WEBSITE_DIR $server:$DEST_DIR >> $LOG 2>&1
+done
+
+rm $LOCK

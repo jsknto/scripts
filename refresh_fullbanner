@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# Refresca estatus de full banner
+# V 1.0
+# By alan@megamedia.com.mx
+# 23 Oct 2013
+
+SITE=yucatan.com.mx
+PROCESS=fullbanner-cron-job
+JS="wp-content/uploads/fullbanner.js"
+CURL=/usr/bin/curl
+RMCACHE=/var/www/dinamo/cgi-bin/rmcache.cgi
+
+# Actualiza archivo de ejecucion de fullbanner
+$CURL http://$SITE/$PROCESS
+
+# Limpia cache
+$RMCACHE http://$SITE/$JS

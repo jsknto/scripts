@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# All Rights Reserved 2008 -- Red y Comunicacion, Grupo Megamedia
+#
+# Desc: Sincroniza los directorios especificados en el
+#       archivo /usr/local/bin/sync_to_illinois_dirs
+# Date: Agosto 06, 2010
+#
+
+LOG=/var/log/sync_to_illinois.log
+DIRS=/usr/local/bin/sync_to_illinois_dirs
+LOCK=/var/run/sync.lock
+
+if [ -f "$LOCK" ] ; then
+
+echo "`date` - La Sincronizacion anterior no ha finalizado" >> $LOG
+exit
+
+else
+
+`touch $LOCK`
+date >> $LOCK
+
+echo ">>>> `date` - Inicia proceso de sincronizacion Dinamo - Illinois <<<<" >> $LOG
+
+for i in `cat $DIRS`
+  do
+
+        echo "Content-type: text/html"
+        echo ""
+        echo "<html><head><title>Sincroniza la carpeta $i</title></head><body>"
+
+        #echo "`date` - Realizando Sincronizacion de $i" >> $LOG
+        echo "`date` - Realizando Sincronizacion de $i"
+
+        # La sincronizacion se realiza con RSYNC
+        #/usr/bin/rsync -vauz --log-file=$LOG /var/www/html/v7/fotos/20100719/ illinois:/var/www/html/edicion/images/fotos
+        #rsync -vauz --log-file=$LOG /var/www/html/v7/fotos/images/ root@illinois:/var/www/html/edicion/images/fotos/
+        rsync -vauz --log-file=$LOG /var/www/html/v7/fotos/images/ root@illinois.sureste.com:/var/www/html/edicion/images/fotos/
+        echo "<h2>Bitacora de sincronizacion de $i</h2>"
+        echo "<pre>"
+        #cat $LOG
+        echo "</pre></body></html>"
+
+
+        echo "`date` - Sincronizacion de $i Finalizada" >> $LOG
+        echo "</body></html>"
+  done
+
+echo "---- `date` - Proceso de sincronizacion Dinamo - Illinois finalizado ----" >> $LOG
+
+`rm -f $LOCK`
+
+fi

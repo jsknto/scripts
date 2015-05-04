@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+#  By alan@megamedia.com.mx
+#  Updated: 30 Sep 2012
+#
+
+DB_NAME=yucatancommx
+BACKUP_DIR=/backups
+DAY=`date "+%d"`
+MONTH=`date "+%b"`
+YEAR=`date "+%Y"`
+DB_FILE=$BACKUP_DIR/$DB_NAME-$DAY$MONTH$YEAR.sql
+LOG=/var/log/backup-v8db.log
+
+echo "`date "+%F %X"` - Iniciando respaldo" >> $LOG
+if [ -z "$BACKUP_DIR" ] ; then
+	mkdir -p $BACKUP_DIR
+fi
+
+nice mysqldump -ptocoxid1 $DB_NAME --result-file=$DB_FILE >> $LOG 2>&1
+# comprime
+nice gzip -9 $DB_FILE
+
+# Fin
+echo "`date "+%F %X"` - Respaldos finalizados" >> $LOG

@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+#  Sync EE files from master server
+#  By alan@megamedia.com.mx
+#  Updated: 7 Abr 2014
+#
+
+REMOTE_SERVER="banyan.sureste.com"
+EE_DIR=/var/www/yucatan.com.mx
+DEST_DIR=/var/www
+LOG=/var/log/sync_from_master.log
+LOCK=/var/lock/sync_from_master.lock
+
+if [ ! -f "$LOCK" ] ; then
+	touch $LOCK
+	echo "`date "+%F %X"` - Sincronizando desde $REMOTE_SERVER" >> $LOG
+	rsync -vauzL --exclude-from=$RSYNC_EXCLUDES $REMOTE_SERVER:$EE_DIR $DEST_DIR >> $LOG 2>&1
+	rm $LOCK
+else
+	echo "`date "+%F %X"` - Hay otro proceso en ejecucion" >> $LOG
+fi

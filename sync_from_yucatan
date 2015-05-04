@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+#  By alan@megamedia.com.mx
+#  Updated: 9 Oct 2012
+#  Vers: 2.0
+#
+
+REMOTE_SERVER=bane.sureste.com
+SSH_PORT=22
+DB_NAME=yucatancommx
+BACKUP_DIR=/backups
+WEBSITE_DIR=/var/www/yucatan.com.mx
+DAY=`date "+%d"`
+MONTH=`date "+%b"`
+YEAR=`date "+%Y"`
+DB_FILE=$BACKUP_DIR/$DB_NAME-$DAY$MONTH$YEAR.sql
+LOG=/var/log/sync_from_yucatan.log
+RSYNC_EXCLUDES=/etc/rsync/rsync-exclusions.conf 
+
+echo "`date "+%F %X"` - Iniciando sincronizacion" >> $LOG
+echo "`date "+%F %X"` - Generando remotamente dump de $DB_NAME" >> $LOG
+ssh -p $SSH_PORT $REMOTE_SERVER ls /backups
+if [ $? -ne 0 ] ; then
+	ssh -p $SSH_PORT $REMOTE_SERVER mkdir -p $BACKUP_DIR
+fi
+ssh -p $SSH_PORT $REMOTE_SERVER nice mysqldump --single-transaction $DB_NAME --result-file=$DB_FILE >> $LOG 2>&1
+
+echo "`date "+%F %X"` - Comprimiendo remotamente dump de $DB_NAME" >> $LOG
+ssh -p $SSH_PORT $REMOTE_SERVER nice gzip -9 -f $DB_FILE >> $LOG 2>&1
+
+echo "`date "+%F %X"` - Transfiriendo dump de $DB_NAME" >> $LOG
+if [ -z "$BACKUP_DIR" ] ; then
+	mkdir -p $BACKUP_DIR
+fi
+scp -P $SSH_PORT -q $REMOTE_SERVER:$DB_FILE.gz $BACKUP_DIR >> $LOG 2>&1
+
+echo "`date "+%F %X"` - Descomprimiendo dump de $DB_NAME" >> $LOG
+gunzip -f $DB_FILE.gz >> $LOG 2>&1
+
+# Confirma que el archivo llego correctamente y contiene datos
+DB_TABLES=`grep "CREATE TABLE" $DB_FILE | wc -l`
+
+if [ $DB_TABLES -gt 85 ] ; then
+	echo "`date "+%F %X"` - Limpiando BD local $DB_NAME" >> $LOG
+	mysqladmin -ptocoxid1 -f drop $DB_NAME >> $LOG 2>&1
+	mysqladmin -ptocoxid1 create  $DB_NAME >> $LOG 2>&1
+
+	echo "`date "+%F %X"` - Cargando nuevos datos a BD local $DB_NAME" >> $LOG
+	mysql -ptocoxid1 $DB_NAME < $DB_FILE >> $LOG 2>&1
+	gzip -9 $DB_FILE
+else
+	echo "`date "+%F %X"` - La BD $DB_NAME no esta completa. Reintente." >> $LOG
+fi
+
+echo "`date "+%F %X"` - Sincroniza archivos de WordPress" >> $LOG
+rsync -vauz --exclude-from=$RSYNC_EXCLUDES $REMOTE_SERVER:$WEBSITE_DIR /var/www/ >> $LOG 2>&1
+
+echo "`date "+%F %X"` - Iniciando respaldos de codigos" >> $LOG
+
+# Respalda Codigos
+TAR_FILE=$BACKUP_DIR/$REMOTE_SERVER-$MONTH$YEAR.tar
+find $WEBSITE_DIR | grep '\.php\|\.js\|\.htm|\.css' | grep -v tmp | xargs tar cf $TAR_FILE >> $LOG 2>&1
+if [ -f $TAR_FILE.gz ] ; then
+	rm $TAR_FILE.gz
+fi
+gzip -9 $TAR_FILE
+
+# Fin
+echo "`date "+%F %X"` - Sincronizacion y respaldos finalizados" >> $LOG

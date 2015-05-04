@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# All Rights Reserved 2008 -- Red y Comunicacion, Grupo Megamedia
+#
+
+LOG=/var/log/XMLCopy.log
+LOG_RSYNC=/var/log/XMLCopy_RSYNC.log
+DIRS=/usr/local/bin/XMLCopy_dirs
+LOCK=/var/run/sync.XML.lock
+TODAY=`date "+%Y%m%d"`
+
+if [ -f "$LOCK" ] ; then
+
+	echo "`date` - La Sincronizacion anterior no ha finalizado" >> $LOG
+	exit
+else
+	echo "`date` - Comienza la conversion de XML" >> $LOG
+
+	/usr/bin/php /var/www/html/v7/fotos/prueba.php >> $LOG
+
+	echo "`date` - Modificando los permisos de la carpeta del dia" >> $LOG
+
+	chown -fR internet:internet /var/www/html/v7/fotos/images/*
+
+	echo "`date` - Proceso COMPLETADO" >> $LOG
+
+fi
+

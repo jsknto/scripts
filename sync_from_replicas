@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+#  Sync EE files from replica Servers
+#  By alan@megamedia.com.mx
+#  Updated: 6 Jun 2013
+#
+
+REMOTE_SERVER="banyan.sureste.com"
+PHOTOS_DIR=/var/www/yucatan.com.mx/wp-content/uploads
+BLOGS_DIR=/var/www/yucatan.com.mx/wp-content/blogs.dir
+DEST_DIR=/var/www/yucatan.com.mx/wp-content
+LOG=/var/log/sync_from_replicas.log
+LOCK=/var/lock/sync_from_replicas.lock
+
+if [ ! -f "$LOCK" ] ; then
+	touch $LOCK
+	echo "`date "+%F %X"` - Sincronizando desde $REMOTE_SERVER" >> $LOG
+	rsync -vauzL --exclude-from=$RSYNC_EXCLUDES $REMOTE_SERVER:$PHOTOS_DIR $DEST_DIR >> $LOG 2>&1
+	rsync -vauzL --exclude-from=$RSYNC_EXCLUDES $REMOTE_SERVER:$BLOGS_DIR $DEST_DIR >> $LOG 2>&1
+	rm $LOCK
+else
+	echo "`date "+%F %X"` - Hay otro proceso en ejecucion" >> $LOG
+fi

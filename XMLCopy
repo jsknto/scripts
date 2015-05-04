@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# All Rights Reserved 2008 -- Red y Comunicacion, Grupo Megamedia
+#
+
+LOG=/var/log/XMLCopy.log
+DIRS=/usr/local/bin/XMLCopy_dirs
+LOCK=/var/run/sync.XML.lock
+TODAY=`date "+%Y%m%d"`
+
+if [ -f "$LOCK" ] ; then
+
+echo "`date` - La Sincronizacion anterior no ha finalizado" >> $LOG
+exit
+
+else
+
+`touch $LOCK`
+date >> $LOCK
+
+echo ">>>> `date` - Inicia proceso de sincronizacion $i <<<<" >> $LOG
+
+for i in `cat $DIRS`
+  do
+
+        echo "Content-type: text/html"
+        echo ""
+        echo "<html><head><title>Sincroniza la carpeta $i</title></head><body>"
+
+        echo "`date` - Realizando Sincronizacion de $i" >> $LOG
+
+        # La sincronizacion se realiza con RSYNC
+	rsync -vauz --remove-source-files --log-file=$LOG  --iconv=UTF-8 /var/www/html/v7/$i/ /var/www/html/v7/fotos/xml/
+
+
+        echo "`date` - Sincronizacion de $i Finalizada" >> $LOG
+  done
+
+echo "---- `date` - Proceso de sincronizacion finalizado ----" >> $LOG
+
+`rm -f $LOCK`
+
+fi
+
+echo "`date` - Comienza la conversion de XML" >> $LOG
+
+/usr/bin/php /var/www/html/v7/fotos/prueba.php > $LOG
+
+echo "`date` - Modificando los permisos de la carpeta del dia" >> $LOG
+
+chown -fR internet:internet /var/www/html/v7/fotos/images/*
+
+echo "`date` - Proceso COMPLETADO" >> $LOG
+
+exit

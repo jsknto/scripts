@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+#  Wordpress EE backup
+#  By alan@megamedia.com.mx
+#  Version 2
+#  Updated: 12 Dic 2014
+#
+
+DB_NAME=yucatancommx
+BACKUP_DIR=/backups
+DAY=`date "+%A"`
+DB_FILE=$BACKUP_DIR/$DB_NAME-db-$DAY.sql
+SITE_DIR=/var/www/yucatan.com.mx/
+SITE_FILE=$BACKUP_DIR/$DB_NAME-code-$DAY.tar
+LOG=/var/log/backup-wpdb.log
+
+echo "`date "+%F %X"` - Respaldo $DAY" >> $LOG
+if [ -z "$BACKUP_DIR" ] ; then
+	mkdir -p $BACKUP_DIR
+fi
+
+# Respalda Base de Datos
+nice mysqldump -ptocoxid1 -e -q --single-transaction --master-data $DB_NAME --result-file=$DB_FILE >> $LOG 2>&1
+
+if [ -f "$DB_FILE.gz" ] ; then
+	rm $DB_FILE.gz
+fi
+# comprime
+nice gzip -f9 $DB_FILE
+
+# Respalda Codigo
+if [ -f "$SITE_FILE.gz" ] ; then
+	rm $SITE_FILE.gz
+fi
+
+tar -cvf $SITE_FILE --exclude='blogs.dir' --exclude='uploads' --exclude='pgcache' $SITE_DIR >> $LOG 2>&1
+nice gzip -9 $SITE_FILE
+
+# Fin
+echo "`date "+%F %X"` - Respaldo finalizado" >> $LOG

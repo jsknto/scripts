@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# All Rights Reserved 2008 -- Red y Comunicacion, Grupo Megamedia
+#
+# Version 2
+
+LOG=/var/log/XMLParser.log
+LOCK=/var/run/XMLParser.lock
+PARSER=/var/www/html/v8/parser/Export-xml-v8.php
+
+if [ ! -f "$LOCK" ] ; then
+	touch $LOCK
+
+	/usr/bin/php $PARSER >> $LOG
+
+	rm -f $LOCK
+else
+	echo "ERROR: XMLParser se esta ejecutando o tiene un lock perdido" >> $LOG
+fi

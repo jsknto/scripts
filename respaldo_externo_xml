@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Enlaces y Comunicaciones del Sureste, S.A. de C.V.
+# Derechos Reservados 2002-2009
+#
+# Descripcion: Respalda el contenido de /var/www/html/v7/fotos/respaldo al servidor atlas
+# Version: 1.0
+# Actualizacion: 06 de Enero de 2012
+#
+
+LOG_FILE=/var/log/respaldo_externo_xml.log
+RESPALDO_DIR=/var/www/html/v8/Respaldo_xml/IPAD
+IMAGENES_DIR=/var/www/html/v8/Respaldo_xml/IPAD/imagenes
+
+if [ "$1" != "" ]; then
+	TODAY=$1 
+else
+	TODAY=`date "+%Y%m%d"`
+fi
+
+ORIGEN="$RESPALDO_DIR/$TODAY"
+DESTINO="/mnt/atlasnt/XML"
+
+echo "`date` - Iniciando proceso de copiado a ATLAS" >> $LOG_FILE
+cp -vfru $ORIGEN $DESTINO >> $LOG_FILE
+cp -vfru "$IMAGENES_DIR/$TODAY" "$DESTINO/imagenes" >> $LOG_FILE
+echo "`date` - Fin de copiado a ATLAS" >> $LOG_FILE
+	

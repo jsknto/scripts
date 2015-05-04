@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# Version 1.0
+# By alan@megamedia.com.mx
+# Update: 27 Sep 2013
+#
+
+URL_LIST=/etc/squid/portadas.txt
+LOG=/var/log/get_cache.log
+ROOT_DOMAIN=yucatan.com.mx
+PGCACHE_DIR=/var/www/yucatan.com.mx/wp-content/w3tc-
+INDEX_FILE="_index.html"
+MAXLOAD=10
+
+if [ -z "$1" ] ; then
+	URL=`cat $URL_LIST`
+else
+	URL=$1
+fi
+
+for page in $URL
+do	
+  # Verifica la carga del servidor
+  LOAD=`uptime | awk 'BEGIN {FS="average:"} {print $2}' | awk 'BEGIN {FS=","} {print $2}' | awk 'BEGIN {FS="."} {print $1}'`
+
+  if [ "$LOAD" -lt "$MAXLOAD" ] ; then
+	# Parsea el URL
+	proto="$(echo $page | grep :// | sed -e's,^\(.*://\).*,\1,g')"
+	url="$(echo ${page/$proto/})"
+	host="$(echo $url | cut -d/ -f1)"
+	path="$(echo $url | grep / | cut -d/ -f2-)"
+
+	# Limpia y regenera W3TC
+	if [ -z "$path" ] ; then
+		PGCACHE_FILE=$PGCACHE_DIR$host/pgcache/$INDEX_FILE
+	else
+		PGCACHE_FILE=$PGCACHE_DIR$host/pgcache/$path/$INDEX_FILE
+	fi
+
+	if [ ! -f "$PGCACHE_FILE" ] ; then
+		wget -O /dev/null -q $page
+		ERR=$?
+	else
+		ERR=1
+	fi
+
+  else	
+	ERR=2
+  fi
+
+  # Actualiza bitacora
+  if [ "$ERR" -eq 0 ] ; then
+	echo "`date` - Pagina generada: $page" >> $LOG
+  fi
+done

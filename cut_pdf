@@ -1,0 +1,51 @@
+#!/bin/sh
+#
+#  CUT PDFs to NDPublishingIT
+#  By hugo@megamedia.com.mx
+#  Updated: 9 Ene 2015
+#
+
+folder=/mnt/atlasnt/PDFS/`date "+%d%m%Y"`
+fecha=`date "+%d%m%y"`
+news=$1 # ciudad de publicación
+lastNumber=$2 # numero de Página última
+firstNumber=$3 #número de página primera
+quality=$4 #Calidad
+resx=$5 #pts y 
+resy=$6 #pts x
+color="C.PDF"
+color2="C_BackUp.PDF"
+folder_bck=/mnt/atlasnt/PDFS/backupPDF
+pdf=$folder/$firstNumber$news$fecha$color #PDF Original
+pdfLast=$folder/$lastNumber$news$fecha$color #pdf ultimo
+pdfNameBackUp=$folder_bck/$firstNumber$news$fecha$color2 #nombre del Backup
+resz=`expr $resx / 10`
+
+
+if [  -f $pdfNameBackUp ] ; then 
+	echo "El fichero existe";
+
+
+
+else
+        echo "El fichero no existe"
+
+mv $pdf $pdfNameBackUp
+##lastNumberr=`ls /mnt/atlasnt/PDFS/12022015/*IM* | tail -1 | sed 's/\/mnt\/atlasnt\/PDFS\/12022015\///;' | cut -c 1-2`
+lastNumberr=`ls $folder/*IM* |tail -1 | sed "s|$folder\/||;" | cut -c 1-2` 
+ numberFile=`expr $lastNumberr + 1`
+
+
+
+#/mnt/atlasnt/PDFS/12022015/IM120215C.PDF
+#/mnt/atlasnt/PDFS/12022015/IM120215C.PDF
+pdfLast=$folder/$numberFile$news$fecha"C.PDF" #pdf ultimo
+
+echo `gs -o $pdfLast -sDEVICE=pdfwrite -g"$resx"x"$resy" -c '<</PageOffset [0 0]>> setpagedevice' -f $pdfNameBackUp`
+
+echo `gs -o $pdf -sDEVICE=pdfwrite -g"$resx"x"$resy" -c '<</PageOffset [-'"$resz"' 0]>> setpagedevice' -f $pdfNameBackUp`
+
+
+fi
+
+
